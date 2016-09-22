@@ -30,6 +30,7 @@ def getImageURLs(URL, query, start, session):
         Requests google for image URLs related to 'query' and returns them.
     '''
 
+    imageIds = []
     imageURLs = []
     width = 1366
     height = 768
@@ -47,11 +48,29 @@ def getImageURLs(URL, query, start, session):
     request = session.get(URL, params=params)
     bs = BeautifulSoup(request.text)
 
-    for img in bs.findAll("div", {"class": "rg_di"}):
+    for img in bs.findAll("div", {"class": "rg_el"}):
         try:
-            imageURLs.append(img.find("img").attrs["data-src"])
+            # We obtain image id
+            idImage = img.find("img").attrs["name"]
+            # Work with this id to make it usable
+            imageIds.append('#imgrc='+idImage[:len(idImage)-1]+'%3A')
+
+            #imageURLs.append(img.find("img").attrs["data-src"])
         except:
             pass
+#data-src de la img dentro del a
+
+    url = request.url
+    #print url+imageIds[0]
+    for idImagen in imageIds:
+
+        request2 = session.get(url+idImagen)
+        bs = BeautifulSoup(request2.text)
+
+        for image in bs.findAll("div", {"class" : "rg_el"}):
+            a=image.findAll('a')[0]
+            imageURLs.append(a.findAll('img')[0].attrs['data-src'])
+            #imageURLs.append(image.a['href'])
 
     return imageURLs
 
@@ -135,7 +154,7 @@ def getImages(imageName, pathToSave="images"):
     images = []
     imageURLs = []
     s = requests.session()
-    N = 10 # Google service limits N to be not greater than 1000
+    N = 1 # Google service limits N to be not greater than 1000
 
     for x in range(0, N):
 
